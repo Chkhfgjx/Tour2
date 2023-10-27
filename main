@@ -1,0 +1,94 @@
+import mysql.connector
+
+# Подключение к удаленной СУБД MySQL
+db = mysql.connector.connect(
+    host="хост_БД",  # IP-адрес или имя хоста базы данных
+    user="пользователь",  # имя пользователя базы данных
+    password="пароль",  # пароль пользователя базы данных
+    database="название_БД"  # название базы данных
+)
+
+if db.is_connected():
+    print("Подключение к базе данных успешно установлено")
+
+# Создание таблицы
+cursor = db.cursor()
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS туры (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        название VARCHAR(255),
+        страна VARCHAR(255),
+        длительность INT,
+        цена DECIMAL(10,2)
+    )
+""")
+
+# Добавление тура
+def add_tour():
+    название = input("Введите название тура: ")
+    страна = input("Введите название страны: ")
+    длительность = int(input("Введите длительность тура (в днях): "))
+    цена = float(input("Введите цену тура: "))
+
+    sql = "INSERT INTO туры (название, страна, длительность, цена) VALUES (%s, %s, %s, %s)"
+    values = (название, страна, длительность, цена)
+
+    cursor.execute(sql, values)
+    db.commit()
+
+    print("Тур успешно добавлен")
+
+# Получение списка туров
+def get_tours():
+    cursor.execute("SELECT * FROM туры")
+    tours = cursor.fetchall()
+
+    if tours:
+        print("Список туров:")
+        for tour in tours:
+            print(f"ID: {tour[0]}, Название: {tour[1]}, Страна: {tour[2]}, Длительность: {tour[3]} дней, Цена: {tour[4]}")
+    else:
+        print("Нет доступных туров")
+
+# Удаление тура
+def delete_tour():
+    tour_id = int(input("Введите ID тура для удаления: "))
+
+    sql = "DELETE FROM туры WHERE id = %s"
+    values = (tour_id, )
+
+    cursor.execute(sql, values)
+    db.commit()
+
+    if cursor.rowcount > 0:
+        print("Тур успешно удален")
+    else:
+        print("Тур с указанным ID не найден")
+
+# Основное меню
+def main_menu():
+    while True:
+        print("\n===== Туроператор =====")
+        print("1. Добавить тур")
+        print("2. Показать список туров")
+        print("3. Удалить тур")
+        print("0. Выход")
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            add_tour()
+        elif choice == "2":
+            get_tours()
+        elif choice == "3":
+            delete_tour()
+        elif choice == "0":
+            break
+        else:
+            print("Некорректный выбор")
+
+# Запуск основного меню
+main_menu()
+
+# Закрытие соединения с базой данных
+cursor.close()
+db.close()
